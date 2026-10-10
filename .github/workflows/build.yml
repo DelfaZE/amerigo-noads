@@ -1,0 +1,28 @@
+name: build
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  ipa:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tests du sniffer
+        run: node --test test/sniffer.test.js
+      - name: Générer le projet Xcode
+        run: brew install xcodegen && xcodegen generate
+      - name: Compiler sans signature
+        run: >
+          xcodebuild -project AmerigoNoAds.xcodeproj -target AmerigoNoAds
+          -configuration Release -sdk iphoneos SYMROOT="$PWD/build"
+          CODE_SIGNING_ALLOWED=NO build
+      - name: Empaqueter l'ipa
+        run: |
+          mkdir Payload
+          cp -R build/Release-iphoneos/AmerigoNoAds.app Payload/
+          zip -qr AmerigoNoAds.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AmerigoNoAds
+          path: AmerigoNoAds.ipa
