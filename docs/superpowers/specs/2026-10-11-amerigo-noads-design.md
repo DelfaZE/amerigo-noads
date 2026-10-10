@@ -34,8 +34,8 @@ SwiftUI, iOS 16+. `TabView` à deux onglets.
 | `App/Downloader.swift` | `ObservableObject` : file des téléchargements, progression, erreurs, réessai |
 | `App/FilesView.swift` | Téléchargements en cours en haut ; contenu de `Documents/` ; renommer, supprimer, nouveau dossier ; ouverture du lecteur |
 | `App/PlayerView.swift` | Wrapper `AVPlayerViewController` |
-| `App/sniffer.js` | Script injecté (`WKUserScript`, tous les frames, document start) |
-| `App/Info.plist` | `UIFileSharingEnabled`, `LSSupportsOpeningDocumentsInPlace`, `UIBackgroundModes: audio` |
+| `Web/sniffer.js` | Script injecté (`WKUserScript`, tous les frames, document start) ; dossier à part pour être copié en ressource |
+| `Info.plist` | Généré par XcodeGen depuis `project.yml` : `UIFileSharingEnabled`, `LSSupportsOpeningDocumentsInPlace`, `UIBackgroundModes: audio` |
 | `test/sniffer.test.js` | Tests `node --test` du sniffer |
 | `.github/workflows/build.yml` | `brew install xcodegen` → `xcodegen` → `xcodebuild` sans signature → zip `Payload/` en `.ipa` → artifact |
 
