@@ -5,6 +5,7 @@ final class BrowserModel: NSObject, ObservableObject, WKScriptMessageHandler, WK
     let webView: WKWebView
     @Published var address = "duckduckgo.com"
     @Published var videos: [DetectedVideo] = []
+    private var urlObserver: NSKeyValueObservation?
 
     override init() {
         let config = WKWebViewConfiguration()
@@ -17,6 +18,12 @@ final class BrowserModel: NSObject, ObservableObject, WKScriptMessageHandler, WK
         webView.navigationDelegate = self
         webView.uiDelegate = self
         webView.allowsBackForwardNavigationGestures = true
+        // Observe l'URL plutôt que les navigations : les sites "SPA" (YouTube) changent de vidéo sans recharger.
+        // YouTube change l'URL avant la source vidéo, donc la nouvelle vidéo arrive après la remise à zéro.
+        urlObserver = webView.observe(\.url) { [weak self] webView, _ in
+            self?.videos = []
+            if let url = webView.url { self?.address = url.absoluteString }
+        }
         go()
     }
 
@@ -41,11 +48,6 @@ final class BrowserModel: NSObject, ObservableObject, WKScriptMessageHandler, WK
               !videos.contains(where: { $0.url == url }) else { return }
         let title = body["pageTitle"] ?? ""
         videos.append(DetectedVideo(url: url, kind: kind, title: title.isEmpty ? (webView.title ?? "") : title, referer: body["pageUrl"] ?? ""))
-    }
-
-    func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
-        videos = []
-        address = webView.url?.absoluteString ?? address
     }
 
     // Liens target=_blank ouverts dans la même vue ; les popups non issues d'un clic (pubs) sont ignorées.
@@ -102,8 +104,11 @@ struct BrowserView: View {
     }
 
     private func download(_ video: DetectedVideo) {
+        // Titre lu maintenant : à la détection, YouTube affiche encore "YouTube".
+        let title = model.webView.title.flatMap { $0.isEmpty ? nil : $0 } ?? video.title
+        let named = DetectedVideo(url: video.url, kind: video.kind, title: title, referer: video.referer)
         model.webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { cookies in
-            downloader.start(video, cookies: cookies)
+            downloader.start(named, cookies: cookies)
         }
         showVideos = false
     }

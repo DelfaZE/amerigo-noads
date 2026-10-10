@@ -9,6 +9,9 @@ test('classify reconnait mp4, hls, blob et ignore le reste', () => {
   assert.deepStrictEqual(classify('/v/a.MP4?token=1', BASE), { url: 'https://site.test/v/a.MP4?token=1', kind: 'mp4' });
   assert.deepStrictEqual(classify('master.m3u8', BASE), { url: 'https://site.test/watch/master.m3u8', kind: 'hls' });
   assert.deepStrictEqual(classify('blob:https://site.test/1234', BASE), { url: 'blob:https://site.test/1234', kind: 'blob' });
+  const yt = 'https://rr3---sn-x.googlevideo.com/videoplayback?expire=1&itag=18&mime=video%2Fmp4&sig=abc';
+  assert.deepStrictEqual(classify(yt, BASE), { url: yt, kind: 'mp4' });
+  assert.strictEqual(classify('https://rr3---sn-x.googlevideo.com/videoplayback?itag=140&mime=audio%2Fmp4', BASE), null);
   assert.strictEqual(classify('https://site.test/page.html', BASE), null);
   assert.strictEqual(classify('data:video/mp4;base64,AAAA', BASE), null);
   assert.strictEqual(classify('', BASE), null);
@@ -25,10 +28,18 @@ function fakeWindow() {
     fetch: async (input) => { fetched.push(input); return 'ok'; },
     XMLHttpRequest: class { open(method, url) { this.opened = url; } },
     MutationObserver: class { constructor(cb) { observer = cb; } observe() {} },
+    MediaSource: class {},
+    ManagedMediaSource: class {},
   };
   installSniffer(win, m => posted.push(m));
   return { win, posted, fetched, mutate: records => observer(records) };
 }
+
+test('MSE est caché pour forcer les sites à servir un vrai fichier (YouTube → mp4)', () => {
+  const { win } = fakeWindow();
+  assert.strictEqual(win.MediaSource, undefined);
+  assert.strictEqual(win.ManagedMediaSource, undefined);
+});
 
 test('fetch signale la vidéo une seule fois et appelle le vrai fetch', async () => {
   const { win, posted, fetched } = fakeWindow();

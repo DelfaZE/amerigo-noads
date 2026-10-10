@@ -9,11 +9,17 @@
     if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
     const path = u.pathname.toLowerCase();
     if (path.endsWith('.m3u8')) return { url: u.href, kind: 'hls' };
-    if (path.endsWith('.mp4')) return { url: u.href, kind: 'mp4' };
+    // Fichiers sans extension mais typés dans l'URL (YouTube : googlevideo.com/videoplayback?mime=video/mp4).
+    if (path.endsWith('.mp4') || u.searchParams.get('mime') === 'video/mp4') return { url: u.href, kind: 'mp4' };
     return null;
   }
 
   function installSniffer(win, post) {
+    // Sans MSE, les sites se rabattent sur un vrai fichier (HLS ou mp4) au lieu d'un blob: indétectable.
+    delete win.MediaSource;
+    delete win.ManagedMediaSource;
+    delete win.WebKitMediaSource;
+
     const seen = new Set();
     const report = raw => {
       const v = classify(raw, win.location.href);
