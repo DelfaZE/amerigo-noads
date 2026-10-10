@@ -14,7 +14,7 @@ targets:
     info:
       path: Info.plist
       properties:
-        CFBundleDisplayName: NoAds
+        CFBundleDisplayName: amerigoNoAds
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
         UILaunchScreen: {}
@@ -35,3 +35,4 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         SWIFT_VERSION: "5.0"
         CODE_SIGNING_ALLOWED: "NO"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
